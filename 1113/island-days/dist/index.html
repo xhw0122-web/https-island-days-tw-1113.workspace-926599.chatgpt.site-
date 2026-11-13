@@ -2,7 +2,7 @@
 <html lang="zh-Hant-TW">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#284f40"><meta name="description" content="島日子：給日常一點出走的理由。探索台灣展覽、市集、表演與週末活動，收藏喜歡的日子，活動附官方參考連結。">
+  <meta name="theme-color" content="#284f40"><meta name="description" content="島日子：給日常一點出走的理由。探索全台22縣市的展覽、市集、表演與秘境景點，收藏喜歡的日子，活動附官方參考連結。">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
@@ -14,15 +14,15 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="demo-bar"><span>✓ 真實活動・附官方／主辦參考連結</span><span class="demo-date">資料查核 2026/11/13</span></div>
+  <div class="demo-bar"><span>✓ 全台22縣市・活動與景點附官方來源</span><span class="demo-date">資料查核 2026/11/13</span></div>
   <header class="header"><div class="header-inner">
     <a class="brand" href="#" aria-label="島日子首頁"><span class="brand-mark">島</span><span>島日子<small>ISLAND DAYS</small></span></a>
-    <nav class="desktop-nav" aria-label="主選單"><button data-tab="explore" class="active">探索活動</button><button data-tab="map">地圖探索</button><button data-tab="saved">我的收藏 <span class="saved-count">0</span></button></nav>
+    <nav class="desktop-nav" aria-label="主選單"><button data-tab="explore" class="active">探索活動與景點</button><button data-tab="map">地圖探索</button><button data-tab="saved">我的收藏 <span class="saved-count">0</span></button></nav>
     <button id="city-button" class="location-button"><span data-icon="pin"></span><span id="city-label">全台灣</span><span>⌄</span></button>
   </div></header>
   <p id="connection-status" class="connection-status" role="status" hidden>目前離線 · 可閱讀已下載的活動與收藏；圖片、地圖與官方連結需連線。</p>
   <main id="main"></main>
-  <footer class="footer"><span>島日子 ISLAND DAYS · 把日子過成喜歡的樣子。</span><p>活動依官方或主辦資料人工整理，查核日期2026/11/13，非即時同步；圖片為情境示意。未確認費用不列為免費。</p><button id="install-app" class="secondary" type="button">加入手機主畫面 ↗</button><p id="offline-note">首次連線開啟後可離線閱讀活動；地圖、照片與官方連結需網路。</p></footer>
+  <footer class="footer"><span>島日子 ISLAND DAYS · 把日子過成喜歡的樣子。</span><p>活動與景點依官方資料整理，查核日期2026/11/13，非即時同步；圖片為情境示意。未確認費用不列為免費。新增景點及活動採<a href="https://data.gov.tw/dataset/7777" target="_blank" rel="noopener noreferrer">交通部觀光署景點</a>與<a href="https://data.gov.tw/dataset/7778" target="_blank" rel="noopener noreferrer">活動開放資料</a>（政府資料開放授權條款第1版），內容為本站摘要。</p><button id="install-app" class="secondary" type="button">加入手機主畫面 ↗</button><p id="offline-note">首次連線開啟後可離線閱讀活動；地圖、照片與官方連結需網路。</p></footer>
   <nav class="bottom-nav" aria-label="底部分頁"><button data-tab="explore" class="active"><span data-icon="compass"></span>探索</button><button data-tab="map"><span data-icon="map"></span>地圖</button><button data-tab="saved"><span data-icon="heart"></span>收藏 <i class="saved-count">0</i></button></nav>
   <dialog id="filter-dialog" class="sheet"><form id="filter-form"><div class="sheet-heading"><div><small>MAKE IT YOUR DAY</small><h2>找到你的好日子</h2></div><button type="button" class="icon-button close-dialog" aria-label="關閉篩選">✕</button></div>
     <label class="field-label" for="city">想去哪裡</label><select name="city" id="city"></select>

@@ -1,6 +1,6 @@
 'use strict';
 // Relative URLs keep both GitHub project Pages and folder previews working.
-const CACHE = 'island-days-shell-v1';
+const CACHE = 'island-days-shell-v2';
 const SHELL = ['./', './index.html', './style.css', './vendor/leaflet/leaflet.js', './vendor/leaflet/leaflet.css', './activities.js', './app.js', './pwa.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png', './icons/maskable-512.png'];
 const ROOT = new URL('./', self.location.href);
 self.addEventListener('install', event => {
