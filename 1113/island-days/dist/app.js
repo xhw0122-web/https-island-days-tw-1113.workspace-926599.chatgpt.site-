@@ -31,16 +31,71 @@ function filterCount(){return(state.kind!=='all'?1:0)+(state.city!=='全台灣'?
 function chips(){let a=[];if(state.kind!=='all')a.push(['kind',state.kind==='spot'?'秘境景點':'限期活動']);if(state.city!=='全台灣')a.push(['city',state.city]);if(state.start||state.end)a.push(['date',`${state.start||'不限'} — ${state.end||'不限'}`]);state.types.forEach(t=>a.push(['type:'+t,t]));if(state.fee!=='all')a.push(['fee',state.fee==='free'?'免費活動':'付費活動']);if(state.q)a.push(['q',`搜尋：${state.q}`]);return a.length?`<div class="active-filters">${a.map(([k,v])=>`<button data-remove="${esc(k)}" aria-label="移除${esc(v)}">${esc(v)} ×</button>`).join('')}<button data-reset>清除全部</button></div>`:'';}
 function empty(savedPage=false){return `<div class="empty"><span>${icon(savedPage?'heart':'compass')}</span><h2>${savedPage&&!saved.length?'把喜歡的日子，先收藏起來':'這次還沒找到剛好的活動'}</h2><p>${savedPage&&!saved.length?'看到心動的活動，點一下愛心，下次就能在這裡找到。':'試試其他日期、清除篩選，或看看鄰近縣市。目前為精選資料，尚未完整收錄各地活動與景點。'}</p><button class="primary" ${savedPage&&!saved.length?'data-tab="explore"':'data-reset'}>${savedPage&&!saved.length?'去探索活動':'清除篩選，重新探索'} ↗</button></div>`;}
 function statePanel(){if(state.scenario==='loading')return `<div class="grid" aria-label="活動載入中" aria-busy="true">${Array(3).fill('<div class="skeleton"></div>').join('')}</div>`;if(state.scenario==='error')return `<div class="empty"><span>⌁</span><h2>網路好像打了個小盹</h2><p>這是網路錯誤的原型示範，請點重試回到活動。</p><button class="primary" data-retry>重新載入 ↻</button></div>`;return '';}
-function render(){if(map){map.remove();map=null;}clearTimeout(loadingTimer);document.querySelector('#city-label').textContent=state.city;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));document.querySelectorAll('.saved-count').forEach(e=>e.textContent=saved.length);if(state.tab==='map')renderMap();else if(state.tab==='saved')renderSaved();else renderExplore();hydrateIcons();main.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{img.style.opacity='.15';img.alt='圖片未能載入，活動資訊仍可閱讀';},{once:true}));if(state.scenario==='loading')loadingTimer=setTimeout(()=>{if(state.scenario==='loading'){state.scenario='normal';render();}},1800);}
+function render(){if(map){map.remove();map=null;}clearTimeout(loadingTimer);document.querySelector('#city-label').textContent=state.city;document.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===state.tab));document.querySelectorAll('.saved-count').forEach(e=>e.textContent=saved.length);if(state.tab==='map')renderMap();else if(state.tab==='saved')renderSaved();else if(state.tab==='food')renderFoodGuide();else renderExplore();hydrateIcons();main.querySelectorAll('img').forEach(img=>img.addEventListener('error',()=>{img.style.opacity='.15';img.alt='圖片未能載入，活動資訊仍可閱讀';},{once:true}));if(state.scenario==='loading')loadingTimer=setTimeout(()=>{if(state.scenario==='loading'){state.scenario='normal';render();}},1800);}
 function renderExplore(){const filtered=!!(state.browse||state.q||filterCount()),list=results();main.innerHTML=`${filtered?'<div class="page-top"><span class="eyebrow">FIND YOUR LITTLE ADVENTURE</span><h1>下一站，去哪裡？</h1><p>探索限期活動與常設景點，每筆附官方來源。</p></div><div class="toolbar">'+searchForm()+filterButton()+'</div>':'<section class="hero"><div class="hero-copy"><div class="eyebrow">A LITTLE ESCAPE, A LOVELY DAY.</div><h1>給日常一點<br><span>出走的理由。</span></h1><p>一場展覽、一個市集，或一段沒有安排的午後。<br>在台灣，發現下一個喜歡的日子。</p>'+searchForm()+'</div><a class="hero-art" href="#event-101" data-detail="101"><img src="'+photo('photo-1455390582262-044cdead277a',1200)+'" alt="閱讀主題情境圖片，非活動現場"><div class="hero-stamp">WEEKEND<b>慢慢走</b>TAIWAN</div><div class="hero-caption"><small>真實活動 / 圖片為情境示意</small><p>紀州庵館慶，城南慢慢逛 ↗</p></div></a></section>'}
 <div class="data-note">✓ 活動與景點依官方資料整理 · 最後查核 ${CHECKED}<br><small>非即時同步；照片為情境示意，活動場次、景點開放與費用請再確認官方連結。</small></div>
 <section class="county-discovery" aria-label="依縣市探索"><div class="section-heading"><div><h2>22 縣市，都有出走的理由</h2><p>每縣市至少一處散策景點，也能一起找近期活動。</p></div></div><div class="county-links">${cities.slice(1).map(c=>'<button class="county-button '+(state.city===c?'active':'')+'" data-city="'+c+'" aria-pressed="'+(state.city===c)+'">'+c+' <small>'+events.filter(e=>e.city===c&&available(e)).length+'</small></button>').join('')}</div></section>
+${foodGuideEntry()}
 <section class="quick-links" aria-label="快速找活動">${[['today','sun','今天','留一點時間給今天'],['weekend','calendar','本週末','週末值得好好過'],['free','ticket','免費活動','快樂不一定要花錢'],['near','pin','附近活動','美好就在不遠處']].map(([k,i,t,u])=>'<button class="quick" data-quick="'+k+'"><span class="quick-icon">'+icon(i)+'</span><span><strong>'+t+'</strong><small>'+u+'</small></span><span class="arrow">↗</span></button>').join('')}</section>
 <section id="activities"><div class="section-heading"><div><h2>${filtered?'找到你的好去處':'值得出門的好日子'}<span class="subtitle">CURATED FOR YOU</span></h2><p>${list.filter(e=>e.kind!=='spot').length} 個活動 · ${list.filter(e=>e.kind==='spot').length} 個景點 · 有來源，才收錄</p></div>${filterButton()}</div><div class="kind-tabs" aria-label="內容種類">${[['all','活動＋景點'],['event','限期活動'],['spot','秘境景點']].map(([k,t])=>'<button class="pill '+(state.kind===k?'active':'')+'" data-kind="'+k+'" aria-pressed="'+(state.kind===k)+'">'+t+'</button>').join('')}</div><div class="types-row"><button class="pill ${!state.types.length?'active':''}" data-type="all">全部類型</button>${types.map(t=>'<button class="pill '+(state.types.includes(t)?'active':'')+'" data-type="'+t+'">'+t+'</button>').join('')}</div>${chips()}<div class="results-info"><span>台灣時間 ${today().replaceAll('-','/')} · 費用未確認不列為免費</span><select class="sort" aria-label="活動排序"><option value="soon">活動日期・景點縣市</option>${state.position?'<option value="distance">距離最近</option>':''}</select></div>${statePanel()||(list.length?'<div class="grid">'+list.map(card).join('')+'</div>':empty())}</section>
 ${!filtered&&state.scenario==='normal'?'<aside class="editor-note"><div><small>REAL EVENTS, SLOW DAYS</small><h3>把靈感，變成真的出發。</h3><p>點開每張卡片上的參考連結，確認資訊，再安排你的好日子。</p></div><span class="big-flower">✳</span></aside><section><div class="section-heading"><div><h2>即將結束</h2><p>依活動結束日期排序，僅顯示未來七天內的活動。</p></div></div><div class="mini-grid">'+events.filter(e=>e.kind!=='spot'&&e.end>=today()&&e.end<=iso(new Date(Date.parse(today()+'T12:00:00Z')+7*86400000))).sort((a,b)=>a.end.localeCompare(b.end)).slice(0,3).map(mini).join('')+'</div></section>':''}`;
 const sort=main.querySelector('.sort');if(sort)sort.value=state.sort;}
 function renderSaved(){let list=results();main.innerHTML=`<div class="page-top"><div class="eyebrow">YOUR NEXT GOOD DAY</div><h1>我的口袋清單<span style="font-size:16px;margin-left:12px">${saved.length}</span></h1><p>先留住心動，再挑個好日子出發。</p></div><div class="map-notice"><span>收藏儲存在此瀏覽器，清除網站資料後可能遺失；不需登入。</span>${icon('heart')}</div>${chips()}${statePanel()||(list.length?`<div class="section-heading"><h2>留給下一次出發</h2><button class="text-button" data-reset>清除搜尋與篩選</button></div><div class="grid">${list.sort((a,b)=>(b.status?1:0)-(a.status?1:0)).map(card).join('')}</div>`:empty(true))}`;}
-function renderMap(){const list=results();main.innerHTML=`<div class="page-top"><span class="eyebrow">GOOD THINGS ARE CLOSER THAN YOU THINK</span><h1>跟著地圖，找點好玩的。</h1><p>活動與景點參考位置；詳細入口請查看官方資訊。</p></div><div class="toolbar">${searchForm()}${filterButton()}<div class="map-toggle"><button data-map-mode="map" class="${state.mapMode==='map'?'active':''}">地圖</button><button data-map-mode="list" class="${state.mapMode==='list'?'active':''}">清單</button></div></div>${chips()}<div class="map-notice"><span>${state.position?'本次位置僅供距離排序；地圖服務會依畫面範圍取得圖磚。':'尚未開啟定位，可手動選縣市。未核實座標的活動只列於清單。'}</span><button data-locate>${state.position?'重新定位':'開啟定位'}</button></div><div class="results-info"><span>${list.length} 個好去處 · ${list.filter(e=>e.lat!==null).length} 個場館標記</span><span>查核 ${CHECKED}</span></div>${statePanel()||(!list.length?empty():state.mapMode==='list'?'<div class="grid">'+list.map(card).join('')+'</div>':'<div class="map-layout"><div class="map-canvas" id="map" aria-label="活動位置地圖"></div><div class="map-list">'+list.map(mini).join('')+'</div></div>')}`;if(list.length&&state.mapMode==='map'&&state.scenario==='normal')setTimeout(()=>initMap(list.filter(e=>e.lat!==null)),0);}
+function renderMap(){const list=results();main.innerHTML=`<div class="page-top"><span class="eyebrow">GOOD THINGS ARE CLOSER THAN YOU THINK</span><h1>跟著地圖，找點好玩的。</h1><p>活動與景點參考位置；詳細入口請查看官方資訊。</p></div>${foodGuideEntry()}<div class="toolbar">${searchForm()}${filterButton()}<div class="map-toggle"><button data-map-mode="map" class="${state.mapMode==='map'?'active':''}">地圖</button><button data-map-mode="list" class="${state.mapMode==='list'?'active':''}">清單</button></div></div>${chips()}<div class="map-notice"><span>${state.position?'本次位置僅供距離排序；地圖服務會依畫面範圍取得圖磚。':'尚未開啟定位，可手動選縣市。未核實座標的活動只列於清單。'}</span><button data-locate>${state.position?'重新定位':'開啟定位'}</button></div><div class="results-info"><span>${list.length} 個好去處 · ${list.filter(e=>e.lat!==null).length} 個場館標記</span><span>查核 ${CHECKED}</span></div>${statePanel()||(!list.length?empty():state.mapMode==='list'?'<div class="grid">'+list.map(card).join('')+'</div>':'<div class="map-layout"><div class="map-canvas" id="map" aria-label="活動位置地圖"></div><div class="map-list">'+list.map(mini).join('')+'</div></div>')}`;if(list.length&&state.mapMode==='map'&&state.scenario==='normal')setTimeout(()=>initMap(list.filter(e=>e.lat!==null)),0);}
+function foodGuideEntry() {
+  return `<div class="map-notice food-guide-entry"><span>新竹市美食 10 選 · 從城隍廟小吃到東門市場</span><button data-tab="food">開啟美食地圖 ↗</button></div>`;
+}
+
+function foodMapQuery(place) {
+  return encodeURIComponent(`${place.name} ${place.address}`);
+}
+
+function foodDirections(place) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${foodMapQuery(place)}`;
+}
+
+function renderFoodGuide() {
+  const places = window.HSINCHU_FOOD;
+  main.innerHTML = `
+    <div class="page-top">
+      <h1>新竹市美食 10 選</h1>
+      <p>從城隍廟小吃、北門街甜點到東門市場。依商圈整理，出發前請確認店家營業資訊。</p>
+    </div>
+    <div class="food-guide">
+      <section class="food-map" aria-label="店家地圖">
+        <h2 id="food-map-title" tabindex="-1" aria-live="polite"></h2>
+        <iframe id="food-map-frame" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        <p>地圖需連線。若無法載入，可從各店家卡片開啟 Google Maps 導航。</p>
+      </section>
+      <ul class="food-list" aria-label="新竹市美食名單">
+        ${places.map((place, index) => `
+          <li class="food-stop">
+            <h2>${esc(place.name)}</h2>
+            <p>${esc(place.dish)}</p>
+            <p class="food-address">${esc(place.address)}</p>
+            <div class="food-actions">
+              <button class="secondary" data-food-place="${index}" aria-controls="food-map-frame" aria-pressed="false">在地圖查看</button>
+              <a href="${esc(foodDirections(place))}" target="_blank" rel="noopener noreferrer" aria-label="導航至${esc(place.name)}">導航 ↗</a>
+            </div>
+          </li>
+        `).join('')}
+      </ul>
+    </div>`;
+  selectFoodPlace(0);
+}
+
+function selectFoodPlace(index, moveFocus = false) {
+  const place = window.HSINCHU_FOOD[index];
+  const title = main.querySelector('#food-map-title');
+  const frame = main.querySelector('#food-map-frame');
+  title.textContent = place.name;
+  frame.title = `${place.name}的 Google 地圖`;
+  frame.src = `https://maps.google.com/maps?output=embed&q=${foodMapQuery(place)}`;
+  main.querySelectorAll('[data-food-place]').forEach(button => {
+    button.setAttribute('aria-pressed', String(Number(button.dataset.foodPlace) === index));
+  });
+  if (moveFocus) title.focus();
+}
 function initMap(list){let el=document.querySelector('#map');if(!el)return;if(!list.length){el.innerHTML='<div class="empty"><h2>這些活動尚未核實座標</h2><p>請切換清單查看官方地址，或用場地名稱導航。</p></div>';return;}if(!window.L){el.innerHTML=`<div class="fallback-map"><span>地圖服務未載入 · 以下為可點選的位置示意圖</span>${list.map((e,i)=>`<button class="fallback-pin" data-detail="${e.id}" style="left:${12+(i*29)%75}%;top:${12+(i*17)%68}%" aria-label="${e.title}">${i+1}</button>`).join('')}</div>`;return;}map=L.map(el,{scrollWheelZoom:false}).setView([23.8,121],7);const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(map);let tileErrors=0;tiles.on('tileerror',()=>{if(++tileErrors===3)toast('底圖載入失敗，仍可點選活動標記或切換清單');});list.forEach((e,i)=>L.marker([e.lat,e.lon],{icon:L.divIcon({className:'',html:`<div class="map-marker">${i+1}</div>`,iconSize:[36,36]})}).addTo(map).bindPopup(`<strong>${esc(e.title)}</strong><br>${e.city} · ${e.price}<br>場館位置供參考<br><button data-detail="${e.id}">查看活動詳情 ↗</button>`));const bounds=L.latLngBounds(list.map(e=>[e.lat,e.lon]));if(state.position){L.circleMarker([state.position.lat,state.position.lon],{radius:8,color:'#fff',fillColor:'#367bba',fillOpacity:1}).addTo(map).bindPopup('你的本次位置');}map.fitBounds(bounds,{padding:[40,40],maxZoom:13});}
 function reset(){Object.assign(state,{kind:'all',q:'',city:'全台灣',start:'',end:'',types:[],fee:'all',scenario:'normal'});render();}
 function openFilters(){const f=document.querySelector('#filter-form');f.city.value=state.city;f.start.value=state.start;f.end.value=state.end;f.querySelectorAll('[name=type]').forEach(i=>i.checked=state.types.includes(i.value));f.querySelector(`[name=fee][value=${state.fee}]`).checked=true;document.querySelector('#filter-error').textContent='';updateDatePreset();document.querySelector('#filter-dialog').showModal();}
@@ -65,6 +120,7 @@ document.addEventListener('click',async ev=>{const b=ev.target.closest('button,a
  if(b.id==='clear-filters'){document.querySelector('#filter-form').reset();document.querySelector('#city').value='全台灣';updateDatePreset();}
  if(b.hasAttribute('data-show-all')){state.browse=true;render();document.querySelector('#activities')?.scrollIntoView();}
  if(b.hasAttribute('data-ending')){state.start='2026-11-13';state.end='2026-11-15';state.q='';render();document.querySelector('#activities')?.scrollIntoView();}
+ if(b.hasAttribute('data-food-place'))selectFoodPlace(Number(b.dataset.foodPlace),true);
  if(b.dataset.mapMode){state.mapMode=b.dataset.mapMode;render();}
  if(b.hasAttribute('data-locate'))document.querySelector('#location-dialog').showModal();
  if(b.id==='manual-location'){document.querySelector('#location-dialog').close();openFilters();}

@@ -11,3 +11,40 @@
 [hidden]{display:none!important}.connection-status{margin:0;padding:12px 20px;background:#fff0cb;color:#5c451f;text-align:center;font-size:13px}.footer #install-app{margin-top:12px}.footer #offline-note{max-width:680px}.sheet h3{font-size:15px;margin:22px 0 4px}.header{padding-top:env(safe-area-inset-top)}
 
 .county-discovery{margin:28px 0}.county-links{display:flex;flex-wrap:wrap;gap:8px}.county-button{border:1px solid #d6ddcf;border-radius:9px;padding:8px 12px;min-height:44px;background:#fcfcf7;font-size:13px;white-space:nowrap}.county-button small{color:var(--muted);margin-left:4px}.county-button.active{background:var(--green);color:white}.county-button.active small{color:#e0eab1}.kind-tabs{display:flex;gap:8px;margin:16px 0}.kind-tabs .pill{border-color:var(--green)}#activities{scroll-margin-top:20px}.footer a{text-decoration:underline}@media(max-width:600px){.county-discovery{margin:24px 0}.county-links{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;margin-right:-20px;padding-right:20px}.county-button{font-size:12px}.kind-tabs{gap:6px}.kind-tabs .pill{padding:8px 12px;font-size:12px}.county-discovery .section-heading p{font-size:11px}}
+
+.food-guide-entry { margin: 16px 0; }
+.food-guide {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  align-items: start;
+  gap: 24px;
+}
+.food-map, .food-stop {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.food-map { position: sticky; top: 90px; }
+.food-map h2, .food-stop h2 { font-size: 18px; margin: 0 0 8px; }
+.food-map p, .food-stop p { margin: 4px 0; }
+.food-map p, .food-address { color: var(--muted); font-size: 13px; }
+.food-map iframe {
+  display: block;
+  width: 100%;
+  height: clamp(280px, 50vh, 480px);
+  border: 0;
+  border-radius: 10px;
+  background: var(--paper);
+}
+.food-map h2 { scroll-margin-top: 95px; }
+.food-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.food-stop:has([aria-pressed="true"]) { border-color: var(--green); }
+.food-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 10px; }
+.food-actions a { display: inline-flex; align-items: center; min-height: 44px; text-decoration: underline; }
+.food-actions button { min-height: 44px; }
+.food-actions button[aria-pressed="true"] { background: var(--green); color: var(--white); }
+@media (max-width: 760px) {
+  .food-guide { grid-template-columns: 1fr; gap: 16px; }
+  .food-map { position: static; }
+}
