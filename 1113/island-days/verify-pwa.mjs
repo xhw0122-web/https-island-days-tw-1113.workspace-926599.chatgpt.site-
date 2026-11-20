@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
 assert.equal(manifest.display, 'standalone');
+assert.equal(manifest.name, '台灣島日子');
 assert.equal(manifest.scope, './');
 assert.equal(manifest.start_url, './');
 for (const icon of manifest.icons) assert.ok((await stat('dist/' + icon.src)).size);
@@ -59,7 +60,7 @@ for (const path of ['/https-island-days-tw-1113.workspace-926599.chatgpt.site-/'
     listeners.fetch({request:{url,mode,method:'GET'},respondWith:promise=>{response=promise;},waitUntil:()=>{}});
     return response;
   }
-  assert.match(await (await request(root.href, 'navigate')).text(), /島日子/);
+  assert.match(await (await request(root.href, 'navigate')).text(), /<title>台灣島日子<\/title>/);
   assert.match(await (await request(new URL('app.js', root).href, 'cors')).text(), /function render/);
   assert.match(await (await request(new URL('vendor/leaflet/leaflet.js', root).href, 'cors')).text(), /Leaflet/);
   assert.equal(await request('https://images.unsplash.com/photo-test', 'cors'), undefined);

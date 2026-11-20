@@ -10,7 +10,19 @@
 
 [hidden]{display:none!important}.connection-status{margin:0;padding:12px 20px;background:#fff0cb;color:#5c451f;text-align:center;font-size:13px}.footer #install-app{margin-top:12px}.footer #offline-note{max-width:680px}.sheet h3{font-size:15px;margin:22px 0 4px}.header{padding-top:env(safe-area-inset-top)}
 
-.county-discovery{margin:28px 0}.county-links{display:flex;flex-wrap:wrap;gap:8px}.county-button{border:1px solid #d6ddcf;border-radius:9px;padding:8px 12px;min-height:44px;background:#fcfcf7;font-size:13px;white-space:nowrap}.county-button small{color:var(--muted);margin-left:4px}.county-button.active{background:var(--green);color:white}.county-button.active small{color:#e0eab1}.kind-tabs{display:flex;gap:8px;margin:16px 0}.kind-tabs .pill{border-color:var(--green)}#activities{scroll-margin-top:20px}.footer a{text-decoration:underline}@media(max-width:600px){.county-discovery{margin:24px 0}.county-links{flex-wrap:nowrap;overflow-x:auto;padding-bottom:8px;margin-right:-20px;padding-right:20px}.county-button{font-size:12px}.kind-tabs{gap:6px}.kind-tabs .pill{padding:8px 12px;font-size:12px}.county-discovery .section-heading p{font-size:11px}}
+.county-discovery { display: grid; gap: 8px; margin: 24px 0; max-width: 320px; }
+.county-discovery label { font-size: 14px; font-weight: 700; }
+.county-discovery select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid #d6ddcf;
+  border-radius: 9px;
+  background: #fcfcf7;
+  color: var(--dark);
+}
+.county-discovery select:focus-visible { outline: 3px solid #b87936; outline-offset: 3px; }
+.kind-tabs{display:flex;gap:8px;margin:16px 0}.kind-tabs .pill{border-color:var(--green)}#activities{scroll-margin-top:20px}.footer a{text-decoration:underline}@media(max-width:600px){.kind-tabs{gap:6px}.kind-tabs .pill{padding:8px 12px;font-size:12px}}
 
 .food-guide-entry { margin: 16px 0; }
 .food-guide {
