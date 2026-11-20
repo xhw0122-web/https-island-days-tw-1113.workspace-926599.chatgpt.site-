@@ -1,51 +1,55 @@
-import {readFileSync} from 'node:fs';
-import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const nodes=new Map();const node=selector=>{if(!nodes.has(selector))nodes.set(selector,{innerHTML:'',querySelector:()=>null,showModal(){this.open=true;}});return nodes.get(selector);};
-const context=vm.createContext({window:{},document:{querySelector:node},localStorage:{getItem:()=>null},Intl,Date,console,encodeURIComponent,setTimeout,clearTimeout});
-vm.runInContext(readFileSync('dist/activities.js','utf8'),context);
-let app=readFileSync('dist/app.js','utf8');
-vm.runInContext(app.slice(0,app.indexOf("document.querySelector('#city').innerHTML")),context);
-const run=code=>vm.runInContext(code,context);
-assert.equal(run('events.length'),37);
-assert.equal(run('events.every(e=>e.id>=101&&e.sourceUrl.startsWith("https://")&&e.sourceName)'),true);
-assert.equal(run('new Set(events.map(e=>e.id)).size'),37);
-assert.equal(run('available(events.find(e=>e.id===106),"2026-11-16","2026-11-16")'),false,'週一休館不列入當日活動');
-assert.equal(run('available(events.find(e=>e.id===106),"2026-11-14","2026-11-15")'),true);
-assert.equal(run('available(events.find(e=>e.id===101),"2026-11-16","2026-11-16")'),false,'市集結束後不可參加');
-run('state.kind="event";state.start="2026-11-14";state.end="2026-11-15";state.city="台北市";state.fee="free"');
-assert.equal(run('results().map(e=>e.id).sort().join(",")'),'101,103','免費週末搜尋不含付費餐敘或費用未知展覽');
-run('state.city="全台灣";state.fee="paid"');
-assert.equal(run('results().map(e=>e.id).join(",")'),'107','本週末付費活動應為文學餐敘');
-run('state.fee="all";state.q="臺灣科學"');
-assert.equal(run('results().map(e=>e.id).join(",")'),'103','搜尋支援臺／台');
-assert.equal(/模擬活動|活動均為模擬|（虛構）/.test(readFileSync('dist/index.html','utf8')+readFileSync('dist/activities.js','utf8')+app),false);
-assert.equal(run('events.filter(e=>e.booking).every(e=>e.bookingUrl.startsWith("https://"))'),true);
-run('Object.assign(state,{kind:"spot",q:"",city:"全台灣",fee:"all",types:[],start:"2026-11-14",end:"2026-11-15"})');
-assert.equal(run('results().length'),22);
-assert.equal(run('cities.slice(1).every(city=>events.some(e=>e.kind==="spot"&&e.city===city))'),true,'全22縣市至少一處常設景點');
-assert.equal(run('cities.slice(1).every(city=>{state.city=city;return results().length>=1})'),true,'逐縣市篩選需確實顯示景點');
-run('state.city="全台灣";state.fee="free"');
-assert.equal(run('results().every(e=>e.fee===0)'),true,'不將未知費用標示免費');
-run('state.fee="all";state.types=["秘境景點"]');
-assert.equal(run('results().length'),22);
-assert.equal(run('events.filter(e=>e.kind==="spot").every(e=>e.start===null&&e.end===null&&dateLabel(e).includes("常設景點")&&!status(e))'),true);
-run('state.kind="all";state.types=[];state.city="全台灣";state.start="";state.end="";renderExplore()');
-assert.match(nodes.get('#main').innerHTML,/22 縣市/);
-const cityMenu = nodes.get('#main').innerHTML.match(/<select id="explore-city">([\s\S]*?)<\/select>/)?.[1];
-assert.ok(cityMenu, '首頁提供縣市下拉選單');
-assert.deepEqual([...cityMenu.matchAll(/<option value="([^"]+)"/g)].map(match => match[1]), Array.from(run('cities')));
-assert.equal(run('cities.length'), 23);
-assert.match(cityMenu, /<option value="全台灣" selected>/);
-run('state.city="新竹市";renderExplore()');
-assert.match(nodes.get('#main').innerHTML, /<option value="新竹市" selected>/);
-assert.match(nodes.get('#main').innerHTML,/秘境景點/);
-run('detail(201,false)');
-assert.match(nodes.get('#detail-dialog').innerHTML,/常設景點・開放依公告/);
-assert.match(nodes.get('#detail-dialog').innerHTML,/查看官方景點/);
-run('detail(301,false)');
-assert.match(nodes.get('#detail-dialog').innerHTML,/2026\/11\/14/);
-assert.equal(run('events.filter(e=>e.kind==="spot").every(e=>Number.isFinite(e.lat)&&Number.isFinite(e.lon))'),true);
-run('saved=[101,201];state.tab="saved"');
-assert.equal(run('results().map(e=>e.id).join(",")'),'101,201','活動與景點可共同收藏及排序');
-console.log('通過：37筆來源、22縣市景點與逐縣市篩選、種類／日期／費用搜尋、首頁與詳情呈現、活動及景點收藏、座標。');
+import { readFile } from 'node:fs/promises';
+import {
+  categories, checklist, estimate, isStartDate, months, routeSegments, schedule, taipei, totalDays
+} from './dist/travel-plan.js';
+
+assert.equal(months.length, 12);
+assert.equal(totalDays, 365);
+assert.equal(checklist.length, new Set(checklist.map(([id]) => id)).size);
+const annual = estimate(months);
+assert.equal(annual.total, 1399200);
+assert.deepEqual(annual.amounts, [419500, 454500, 233000, 129000, 36000, 127200]);
+assert.deepEqual([annual.low, annual.high], [1119360, 1679040]);
+assert.equal(months.reduce((sum, month) => sum + estimate([month]).total, 0), annual.total);
+
+for (const month of months) {
+  assert.equal(month.cities.reduce((sum, [, days]) => sum + days, month.buffer), month.days);
+  assert.ok(month.buffer >= 2);
+  assert.ok(month.cities[month.anchor]);
+  assert.ok(month.official.length > 0);
+  assert.ok(month.official.every(([, url]) => new URL(url).protocol === 'https:'));
+  assert.equal(month.budget.length, categories.length);
+  assert.ok(month.budget.every(Number.isInteger));
+}
+
+for (const date of ['2027-01-01', '2027-11-20', '2028-02-29', '2099-12-31']) {
+  assert.equal(isStartDate(date), true, date);
+  const plan = schedule(date);
+  assert.equal(plan[0].start, date);
+  assert.equal((Date.parse(plan.at(-1).end) - Date.parse(date)) / 86400000 + 1, 365);
+  for (const [index, month] of plan.entries()) {
+    assert.equal((Date.parse(month.end) - Date.parse(month.start)) / 86400000 + 1, month.days);
+    if (index > 0) assert.equal(Date.parse(month.start) - Date.parse(plan[index - 1].end), 86400000);
+  }
+}
+for (const invalid of ['', '2027-02-29', '2100-01-01', '2028-13-01', '2028-2-1', null]) {
+  assert.equal(isStartDate(invalid), false);
+}
+
+const points = [taipei, ...months.flatMap(month => month.cities.map(([, , lat, lon]) => [lat, lon])), taipei];
+const segments = routeSegments(points);
+assert.equal(segments.length, 2, '南美洲前往大洋洲時需在日界線分段');
+assert.deepEqual(segments[0][0], taipei);
+assert.deepEqual(segments.at(-1).at(-1), taipei);
+assert.equal(segments[0].at(-1)[1], -180);
+assert.equal(segments[1][0][1], 180);
+for (const segment of segments) {
+  for (const [index, [, lon]] of segment.entries()) {
+    if (index) assert.ok(Math.abs(lon - segment[index - 1][1]) <= 180);
+  }
+}
+const land = JSON.parse(await readFile('dist/world-land.json', 'utf8'));
+assert.equal(land.type, 'MultiPolygon');
+assert.ok(land.coordinates.length >= 100);
+console.log('通過：365 天連續行程、閏日、預算明細、各月官方連結、離線世界底圖與跨日界線路線。');

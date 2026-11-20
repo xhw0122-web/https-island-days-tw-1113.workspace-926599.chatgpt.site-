@@ -1,40 +1,104 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#284f40"><meta name="description" content="台灣島日子：給日常一點出走的理由。探索全台22縣市的展覽、市集、表演與秘境景點，收藏喜歡的日子，活動附官方參考連結。">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#142c28">
+  <meta name="description" content="從台灣出發的 365 天環遊世界計畫。探索 12 個月的路線、城市行程、預算與行前清單。">
+  <meta name="apple-mobile-web-app-title" content="環遊世界 365 天">
+  <title>環遊世界 365 天</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" type="image/png" href="./icons/icon-192.png">
+  <link rel="icon" href="./icons/icon-192.png" type="image/png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="台灣島日子">
-  <title>台灣島日子</title>
   <link rel="stylesheet" href="./vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./vendor/leaflet/leaflet.js"></script>
+  <script type="module" src="./app.js"></script>
+  <script defer src="./pwa.js"></script>
 </head>
 <body>
-  <div class="demo-bar"><span>✓ 全台22縣市・活動與景點附官方來源</span><span class="demo-date">資料查核 2026/11/13</span></div>
-  <header class="header"><div class="header-inner">
-    <a class="brand" href="#" aria-label="台灣島日子首頁"><span class="brand-mark">島</span><span>台灣島日子<small>ISLAND DAYS</small></span></a>
-    <nav class="desktop-nav" aria-label="主選單"><button data-tab="explore" class="active">探索活動與景點</button><button data-tab="map">地圖探索</button><button data-tab="saved">我的收藏 <span class="saved-count">0</span></button></nav>
-    <button id="city-button" class="location-button"><span data-icon="pin"></span><span id="city-label">全台灣</span><span>⌄</span></button>
-  </div></header>
-  <p id="connection-status" class="connection-status" role="status" hidden>目前離線 · 可閱讀已下載的活動與收藏；圖片、地圖與官方連結需連線。</p>
-  <main id="main"></main>
-  <footer class="footer"><span>台灣島日子 ISLAND DAYS · 把日子過成喜歡的樣子。</span><p>活動與景點依官方資料整理，查核日期2026/11/13，非即時同步；圖片為情境示意。未確認費用不列為免費。新增景點及活動採<a href="https://data.gov.tw/dataset/7777" target="_blank" rel="noopener noreferrer">交通部觀光署景點</a>與<a href="https://data.gov.tw/dataset/7778" target="_blank" rel="noopener noreferrer">活動開放資料</a>（政府資料開放授權條款第1版），內容為本站摘要。</p><button id="install-app" class="secondary" type="button">加入手機主畫面 ↗</button><p id="offline-note">首次連線開啟後可離線閱讀活動；地圖、照片與官方連結需網路。</p></footer>
-  <nav class="bottom-nav" aria-label="底部分頁"><button data-tab="explore" class="active"><span data-icon="compass"></span>探索</button><button data-tab="map"><span data-icon="map"></span>地圖</button><button data-tab="saved"><span data-icon="heart"></span>收藏 <i class="saved-count">0</i></button></nav>
-  <dialog id="filter-dialog" class="sheet"><form id="filter-form"><div class="sheet-heading"><div><small>MAKE IT YOUR DAY</small><h2>找到你的好日子</h2></div><button type="button" class="icon-button close-dialog" aria-label="關閉篩選">✕</button></div>
-    <label class="field-label" for="city">想去哪裡</label><select name="city" id="city"></select>
-    <span class="field-label">什麼時候</span><div class="date-presets"><button type="button" data-period="any">不限日期</button><button type="button" data-period="today">今天</button><button type="button" data-period="weekend">本週末</button></div>
-    <div class="date-fields"><label>開始日期<input id="start-date" name="start" type="date"></label><span>—</span><label>結束日期<input id="end-date" name="end" type="date"></label></div>
-    <span class="field-label">喜歡哪一種？ <small>可複選</small></span><div id="type-options" class="type-options"></div>
-    <span class="field-label">活動費用</span><div class="fee-options"><label><input name="fee" type="radio" value="all" checked>不限</label><label><input name="fee" type="radio" value="free">免費</label><label><input name="fee" type="radio" value="paid">付費</label></div>
-    <p id="filter-error" role="alert"></p><div class="sheet-actions"><button id="clear-filters" type="button" class="text-button">全部清除</button><button type="submit" class="primary">顯示活動 <span>↗</span></button></div>
-  </form></dialog>
-  <dialog id="detail-dialog" class="detail-dialog"></dialog>
-  <dialog id="location-dialog" class="sheet compact"><div class="sheet-heading"><h2>附近有什麼好玩的？</h2><button class="icon-button close-dialog" aria-label="關閉定位說明">✕</button></div><p>同意後，只在這次探索使用你的目前位置，不儲存位置歷史。地圖顯示場館參考位置；地圖服務會依畫面範圍載入圖磚。</p><p id="location-message" role="status">也可以手動選擇縣市，不需開啟定位。</p><button id="allow-location" class="primary">使用目前位置</button><button id="manual-location" class="secondary">手動選擇縣市</button></dialog>
-  <dialog id="install-dialog" class="sheet compact"><div class="sheet-heading"><h2>把台灣島日子帶著走</h2><button class="icon-button close-dialog" aria-label="關閉安裝說明">✕</button></div><p>加入主畫面後，就能像 App 一樣開啟，不需登入。</p><h3>iPhone / iPad</h3><p>使用 Safari 開啟本站 → 點「分享」→「加入主畫面」→ 若顯示「作為網頁 App 打開」，請保持開啟 →「新增」。</p><h3>Android</h3><p>使用 Chrome 開啟本站 → 點右上角「⋮」→「安裝應用程式」或「加到主畫面」。</p><h3>電腦</h3><p>在 Chrome 或 Edge，使用網址列的安裝圖示或瀏覽器選單安裝。</p><p>首次連線開啟後，活動文字與收藏可離線閱讀；照片、地圖及官方連結需網路。活動資訊以主辦單位公告為準。</p></dialog>
-  <div id="toast" role="status" aria-live="polite"></div>
-  <script src="./vendor/leaflet/leaflet.js"></script><script src="activities.js"></script><script src="app.js"></script><script src="pwa.js"></script>
-</body></html>
+  <header class="site-header" id="top">
+    <div class="shell header-inner">
+      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">✦</span>環遊世界 365 天</a>
+      <nav aria-label="主要導覽">
+        <a href="#itinerary">行程</a>
+        <a href="#budget">預算</a>
+        <a href="#prepare">行前準備</a>
+      </nav>
+    </div>
+  </header>
+  <p id="connection-status" class="connection-status" role="status" hidden>目前離線。行程、地圖與設定仍可使用，官方連結需要連線。</p>
+
+  <main class="shell">
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-copy">
+        <p class="trip-origin"><span aria-hidden="true"></span>台灣出發 · 繞行世界 · 回到台灣</p>
+        <h1 id="hero-heading">環遊世界<br><strong>365 天</strong></h1>
+        <p class="hero-description">用一年走過六個大區。先看看每個月怎麼走，再把旅行日期和預算調成自己的版本。</p>
+        <div class="month-control">
+          <label for="month-select">查看行程月份</label>
+          <select id="month-select" aria-controls="route-panel itinerary budget">
+            <option value="all">全年總覽</option>
+          </select>
+        </div>
+      </div>
+      <figure class="route-panel" id="route-panel">
+        <div class="map-heading"><h2>世界路線</h2><span id="map-scope">全年路線</span></div>
+        <div id="route-map" aria-label="365 天世界旅行路線地圖" hidden></div>
+        <p class="map-fallback" id="map-fallback" role="status">正在載入世界地圖。你也可以用月份選單瀏覽完整行程。</p>
+        <figcaption><span><span class="route-key" aria-hidden="true"></span>建議移動順序</span><a href="https://www.naturalearthdata.com/" target="_blank" rel="noopener noreferrer">底圖 Natural Earth</a></figcaption>
+      </figure>
+    </section>
+
+    <div class="trip-summary" aria-label="行程與預算摘要">
+      <div><span>日期</span><strong id="summary-dates">—</strong></div>
+      <div><span id="summary-budget-label">全年每人估算</span><strong id="summary-budget">—</strong></div>
+      <div><span>全年每人目標預算</span><strong id="summary-target">—</strong></div>
+    </div>
+    <p id="selection-status" class="sr-only" role="status"></p>
+
+    <section id="itinerary" class="content-section" aria-labelledby="itinerary-heading">
+      <div class="section-heading"><div><h2 id="itinerary-heading">12 個月的路線</h2><p id="itinerary-intro">從第一站到最後一班返台航班。選一個月份看城市停留、交通與入境資訊。</p></div></div>
+      <div id="itinerary-content"></div>
+    </section>
+
+    <section id="budget" class="content-section" aria-labelledby="budget-heading">
+      <div class="section-heading"><div><h2 id="budget-heading">旅行預算</h2><p>每人、新台幣。區間取規劃估算的 ±20%，實際費用會隨季節、住宿和訂票時間變動。</p></div></div>
+      <div id="budget-content"></div>
+    </section>
+
+    <section id="prepare" class="content-section" aria-labelledby="prepare-heading">
+      <div class="section-heading"><div><h2 id="prepare-heading">行前準備</h2><p>設定和勾選進度會儲存在這個瀏覽器。</p></div></div>
+      <div class="prepare-grid">
+        <form id="settings-form" class="panel settings" aria-labelledby="settings-heading">
+          <h3 id="settings-heading">我的旅行設定</h3>
+          <label for="start-date">出發日期</label>
+          <input type="date" id="start-date" name="start" min="2000-01-01" max="2099-12-31" required>
+          <label for="target-budget">全年每人目標預算（NT$）</label>
+          <input type="number" id="target-budget" name="target" min="1" max="100000000" step="1" inputmode="numeric" required>
+          <button class="primary" type="submit">套用設定</button>
+          <p id="settings-status" role="status"></p>
+        </form>
+        <div class="panel checklist">
+          <div class="checklist-heading"><h3>出發前清單</h3><span id="checklist-count" aria-live="polite"></span></div>
+          <div id="checklist-items"></div>
+          <a class="official-link" href="https://www.boca.gov.tw/" target="_blank" rel="noopener noreferrer">外交部領事事務局 ↗</a>
+        </div>
+      </div>
+    </section>
+    <noscript><p>請開啟 JavaScript 以瀏覽行程、地圖與預算。</p></noscript>
+  </main>
+
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div><strong>環遊世界 365 天</strong><p id="offline-note">首次完整載入後，可離線閱讀行程與查看路線。</p></div>
+      <button id="install-app" class="secondary" type="button">安裝旅行計畫</button>
+    </div>
+  </footer>
+  <dialog id="install-dialog" aria-labelledby="install-heading">
+    <h2 id="install-heading">把旅行計畫帶著走</h2>
+    <p>iPhone 或 iPad 可在 Safari 的「分享」選單選擇「加入主畫面」。Android 或電腦可使用瀏覽器選單的安裝選項。</p>
+    <form method="dialog"><button class="primary">關閉</button></form>
+  </dialog>
+</body>
+</html>

@@ -1,25 +1,24 @@
-import {readFile, stat} from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
 assert.equal(manifest.display, 'standalone');
-assert.equal(manifest.name, '台灣島日子');
+assert.equal(manifest.name, '環遊世界 365 天');
 assert.equal(manifest.scope, './');
 assert.equal(manifest.start_url, './');
 for (const icon of manifest.icons) assert.ok((await stat('dist/' + icon.src)).size);
 const html = await readFile('dist/index.html', 'utf8');
-for (const [, reference] of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
-  if (!reference.startsWith('https:')) assert.ok((await stat('dist/' + reference)).isFile(), reference);
+for (const [, ref] of html.matchAll(/(?:src|href)="([^"#]+)"/g)) {
+  if (!ref.startsWith('https:')) assert.ok((await stat('dist/' + ref)).isFile(), ref);
 }
 
-// Exercise installation and offline navigation at the actual project subpath,
-// plus the nested folder used by branch-based Pages.
 for (const path of ['/https-island-days-tw-1113.workspace-926599.chatgpt.site-/', '/https-island-days-tw-1113.workspace-926599.chatgpt.site-/1113/island-days/dist/']) {
   const root = new URL(path, 'https://xhw0122-web.github.io');
   const listeners = {};
   const stores = new Map();
   let offline = false;
+  let activatedOnInstall = false;
   const key = request => new URL(typeof request === 'string' ? request : request.url, root).href;
   const get = async request => {
     if (offline) throw new Error('Offline');
@@ -34,36 +33,53 @@ for (const path of ['/https-island-days-tw-1113.workspace-926599.chatgpt.site-/'
       const store = stores.get(name);
       return {
         async addAll(files) { for (const file of files) store.set(key(file), await get(file)); },
-        async put(request, response) { store.set(key(request), response); }
+        async put(request, response) { store.set(key(request), response); },
+        async match(request) { return store.get(key(request))?.clone(); }
       };
-    },
-    async match(request) {
-      for (const store of stores.values()) if (store.has(key(request))) return store.get(key(request)).clone();
     },
     async keys() { return [...stores.keys()]; },
     async delete(name) { return stores.delete(name); }
   };
-  const context = vm.createContext({URL, caches, fetch:get, self:{location:{href:new URL('sw.js',root).href}, clients:{claim:async()=>{}}, addEventListener:(name, handler)=>{listeners[name]=handler;}}});
-  vm.runInContext(await readFile('dist/sw.js','utf8'), context);
+  const self = {
+    location: { href: new URL('sw.js', root).href },
+    clients: { claim: async () => {} },
+    skipWaiting: async () => { activatedOnInstall = true; },
+    addEventListener: (name, handler) => { listeners[name] = handler; }
+  };
+  vm.runInNewContext(await readFile('dist/sw.js', 'utf8'), { URL, caches, fetch: get, self });
+
   let pending;
-  listeners.install({waitUntil:promise=>{pending=promise;}});
+  const waitUntil = promise => { pending = promise; };
+  listeners.install({ waitUntil });
   await pending;
+  assert.equal(activatedOnInstall, true);
   await caches.open('unrelated-app');
   await caches.open('island-days-shell-obsolete');
-  listeners.activate({waitUntil:promise=>{pending=promise;}});
+  listeners.activate({ waitUntil });
   await pending;
-  assert.ok(stores.has('unrelated-app'), 'Other apps must retain their caches');
+  assert.ok(stores.has('unrelated-app'));
   assert.ok(!stores.has('island-days-shell-obsolete'));
-  offline = true;
+
   async function request(url, mode) {
     let response;
-    listeners.fetch({request:{url,mode,method:'GET'},respondWith:promise=>{response=promise;},waitUntil:()=>{}});
+    listeners.fetch({
+      request: { url: new URL(url, root).href, mode, method: 'GET' },
+      respondWith: promise => { response = promise; },
+      waitUntil
+    });
     return response;
   }
-  assert.match(await (await request(root.href, 'navigate')).text(), /<title>台灣島日子<\/title>/);
-  assert.match(await (await request(new URL('app.js', root).href, 'cors')).text(), /function render/);
-  assert.match(await (await request(new URL('vendor/leaflet/leaflet.js', root).href, 'cors')).text(), /Leaflet/);
-  assert.equal(await request('https://images.unsplash.com/photo-test', 'cors'), undefined);
-  assert.equal(await request(new URL('../other-app/app.js', root).href, 'cors'), undefined);
+
+  assert.match(await (await request('./?fresh=1', 'navigate')).text(), /環遊世界 365 天/);
+  await pending;
+  offline = true;
+  assert.match(await (await request('./?offline=1', 'navigate')).text(), /環遊世界 365 天/);
+  assert.match(await (await request('index.html', 'navigate')).text(), /環遊世界 365 天/);
+  assert.match(await (await request('app.js?v=1', 'cors')).text(), /renderPlan/);
+  assert.match(await (await request('travel-plan.js', 'cors')).text(), /從泰國走到越南/);
+  assert.equal((await (await request('world-land.json', 'cors')).json()).type, 'MultiPolygon');
+  assert.match(await (await request('vendor/leaflet/leaflet.js', 'cors')).text(), /Leaflet/);
+  assert.equal(await request('https://www.boca.gov.tw/', 'cors'), undefined);
+  assert.equal(await request('../other-app/app.js', 'cors'), undefined);
 }
-console.log('通過：手機安裝設定、所有首頁資源、兩種專案子路徑、離線首頁／程式／地圖程式快取與快取隔離。');
+console.log('通過：PWA 識別、兩種 GitHub Pages 路徑、離線首頁／行程／地圖、快取換版與隔離。');
